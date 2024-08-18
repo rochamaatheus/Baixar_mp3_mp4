@@ -1,18 +1,18 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 import yt_dlp
 import os
 
-# Configurar o caminho para o ffmpeg local
 ffmpeg_path = os.path.join(os.path.dirname(__file__), 'bin', 'ffmpeg.exe')
 
-def download_videos(file_path):
+def download_videos(file_path, progress, status_label):
     ydl_video_opts = {
         'format': 'bestvideo+bestaudio/best',
         'outtmpl': 'videos/%(title)s.%(ext)s',
         'retries': 3,
         'fragment_retries': 5,
-        'ffmpeg_location': ffmpeg_path,  # Usando o ffmpeg local
+        'ffmpeg_location': ffmpeg_path,
+        'progress_hooks': [lambda d: update_progress(d, progress, status_label)],
     }
     
     ydl_audio_opts = {
@@ -20,12 +20,13 @@ def download_videos(file_path):
         'outtmpl': 'audios/%(title)s.%(ext)s',
         'retries': 3,
         'fragment_retries': 5,
-        'ffmpeg_location': ffmpeg_path,  # Usando o ffmpeg local
+        'ffmpeg_location': ffmpeg_path,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
+        'progress_hooks': [lambda d: update_progress(d, progress, status_label)],
     }
 
     os.makedirs('videos', exist_ok=True)
@@ -45,6 +46,19 @@ def download_videos(file_path):
             with yt_dlp.YoutubeDL(ydl_video_opts) as ydl:
                 ydl.download([url])
 
+def update_progress(d, progress, status_label):
+    if d['status'] == 'downloading':
+        downloaded = d.get('downloaded_bytes', 0)
+        total = d.get('total_bytes', 0)
+        if total > 0:
+            percent = downloaded / total * 100
+            progress['value'] = percent
+            status_label.config(text=f"{percent:.2f}% Baixado")
+        root.update_idletasks()
+    elif d['status'] == 'finished':
+        progress['value'] = 100
+        status_label.config(text="Download Concluído")
+
 def select_file():
     file_path = filedialog.askopenfilename(
         title="Selecione o arquivo de links",
@@ -52,11 +66,19 @@ def select_file():
     )
     if file_path:
         try:
-            download_videos(file_path)
+            progress.pack(pady=10)
+            status_label.pack()
+            progress['value'] = 0
+            status_label.config(text="Iniciando download...")
+            root.update_idletasks()
+            download_videos(file_path, progress, status_label)
             messagebox.showinfo("Sucesso", "Downloads concluídos!")
         except Exception as e:
             messagebox.showerror("Erro", f"Ocorreu um erro: {str(e)}")
-
+        finally:
+            progress.pack_forget()
+            status_label.pack_forget()
+            
 root = tk.Tk()
 root.title("Downloader de Vídeos e Áudios")
 
@@ -68,5 +90,9 @@ label.pack(side=tk.LEFT)
 
 button = tk.Button(frame, text="Selecionar arquivo", command=select_file)
 button.pack(side=tk.LEFT, padx=10)
+
+progress = ttk.Progressbar(root, orient='horizontal', length=300, mode='determinate')
+
+status_label = tk.Label(root, text="Aguardando...")
 
 root.mainloop()
