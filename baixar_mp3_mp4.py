@@ -5,6 +5,7 @@ import os
 import threading
 
 ffmpeg_path = os.path.join(os.path.dirname(__file__), 'bin', 'ffmpeg.exe')
+root = tk.Tk()
 
 def download_videos(file_path, progress, status_label):
     ydl_video_opts = {
@@ -13,7 +14,7 @@ def download_videos(file_path, progress, status_label):
         'retries': 3,
         'fragment_retries': 5,
         'ffmpeg_location': ffmpeg_path,
-        'progress_hooks': [lambda d: update_progress(d, progress, status_label)],
+        'progress_hooks': [lambda d: root.after(0, update_progress, d, progress, status_label)],
     }
     
     ydl_audio_opts = {
@@ -27,7 +28,7 @@ def download_videos(file_path, progress, status_label):
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'progress_hooks': [lambda d: update_progress(d, progress, status_label)],
+        'progress_hooks': [lambda d: root.after(0, update_progress, d, progress, status_label)],
     }
 
     os.makedirs('videos', exist_ok=True)
@@ -46,10 +47,10 @@ def download_videos(file_path, progress, status_label):
         else:
             with yt_dlp.YoutubeDL(ydl_video_opts) as ydl:
                 ydl.download([url])
-
-    messagebox.showinfo("Sucesso", "Downloads concluídos!")
-    progress.pack_forget()
-    status_label.pack_forget()
+    
+    root.after(0, progress.pack_forget)
+    root.after(0, status_label.pack_forget)
+    root.after(0, lambda: messagebox.showinfo("Sucesso", "Downloads concluídos!"))
 
 def update_progress(d, progress, status_label):
     if d['status'] == 'downloading':
@@ -58,8 +59,7 @@ def update_progress(d, progress, status_label):
         if total > 0:
             percent = downloaded / total * 100
             progress['value'] = percent
-            status_label.config(text=f"{percent:.2f}% Baixado")
-        root.update_idletasks()
+            status_label.config(text=f"{percent:.2f}% componentes baixados")
     elif d['status'] == 'finished':
         progress['value'] = 100
         status_label.config(text="Download Concluído")
@@ -83,7 +83,6 @@ def select_file():
         except Exception as e:
             messagebox.showerror("Erro", f"Ocorreu um erro: {str(e)}")
 
-root = tk.Tk()
 root.title("Downloader de Vídeos e Áudios")
 
 frame = tk.Frame(root, padx=10, pady=10)
