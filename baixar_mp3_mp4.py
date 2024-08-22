@@ -98,4 +98,13 @@ progress = ttk.Progressbar(root, orient='horizontal', length=300, mode='determin
 
 status_label = tk.Label(root, text="Aguardando...")
 
+github_label = tk.Label(root, text="GitHub: rochamaatheus (https://github.com/rochamaatheus/)", fg="blue", cursor="hand2")
+github_label.pack(side=tk.BOTTOM, pady=10)
+
+def open_github(event):
+    import webbrowser
+    webbrowser.open_new("https://github.com/rochamaatheus/")
+
+github_label.bind("<Button-1>", open_github)
+
 root.mainloop()
