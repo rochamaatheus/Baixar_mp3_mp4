@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import yt_dlp
 import os
+import threading
 
 ffmpeg_path = os.path.join(os.path.dirname(__file__), 'bin', 'ffmpeg.exe')
 
@@ -46,6 +47,10 @@ def download_videos(file_path, progress, status_label):
             with yt_dlp.YoutubeDL(ydl_video_opts) as ydl:
                 ydl.download([url])
 
+    messagebox.showinfo("Sucesso", "Downloads concluídos!")
+    progress.pack_forget()
+    status_label.pack_forget()
+
 def update_progress(d, progress, status_label):
     if d['status'] == 'downloading':
         downloaded = d.get('downloaded_bytes', 0)
@@ -71,14 +76,13 @@ def select_file():
             progress['value'] = 0
             status_label.config(text="Iniciando download...")
             root.update_idletasks()
-            download_videos(file_path, progress, status_label)
-            messagebox.showinfo("Sucesso", "Downloads concluídos!")
+            
+            download_thread = threading.Thread(target=download_videos, args=(file_path, progress, status_label))
+            download_thread.start()
+            
         except Exception as e:
             messagebox.showerror("Erro", f"Ocorreu um erro: {str(e)}")
-        finally:
-            progress.pack_forget()
-            status_label.pack_forget()
-            
+
 root = tk.Tk()
 root.title("Downloader de Vídeos e Áudios")
 
