@@ -31,7 +31,7 @@ Este aplicativo em Python oferece uma interface simples para baixar vídeos e á
 
 3. **Execute o Aplicativo**:
     ```bash
-    python baixar_mp3_mp4.py
+    python app.py
     ```
 
 4. **Selecione um Arquivo de Texto Contendo URLs do YouTube**:
